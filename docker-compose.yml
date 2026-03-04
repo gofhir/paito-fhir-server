@@ -1,0 +1,51 @@
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API
+      - "3501:3501"   # Admin API
+    environment:
+      GOFHIR_DATABASE_HOST: postgres
+      GOFHIR_DATABASE_PORT: "5432"
+      GOFHIR_DATABASE_USER: paito
+      GOFHIR_DATABASE_PASSWORD: paito
+      GOFHIR_DATABASE_NAME: paito
+      GOFHIR_SERVER_PORT: "3500"
+      GOFHIR_STORAGE_DRIVER: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge
