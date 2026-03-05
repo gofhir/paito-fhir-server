@@ -69,14 +69,13 @@ Configuration is done via environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `FHIR_VERSION` | `R4` | FHIR version: R4, R4B, R5 |
-| `GOFHIR_SERVER_PORT` | `3500` | FHIR API port |
-| `GOFHIR_STORAGE_DRIVER` | `postgres` | Storage: `postgres` or `mongodb` |
-| `GOFHIR_DATABASE_HOST` | `localhost` | PostgreSQL host |
-| `GOFHIR_DATABASE_PORT` | `5432` | PostgreSQL port |
-| `GOFHIR_DATABASE_USER` | `gofhir` | PostgreSQL user |
-| `GOFHIR_DATABASE_PASSWORD` | `gofhir` | PostgreSQL password |
-| `GOFHIR_DATABASE_NAME` | `gofhir` | PostgreSQL database |
-| `GOFHIR_MONGODB_URI` | — | MongoDB connection URI |
+| `STORAGE_DRIVER` | `postgres` | Storage: `postgres` or `mongodb` |
+| `POSTGRES_HOST` | `localhost` | PostgreSQL host |
+| `POSTGRES_USER` | `gofhir` | PostgreSQL user |
+| `POSTGRES_PASSWORD` | `gofhir` | PostgreSQL password |
+| `POSTGRES_DB` | `gofhir` | PostgreSQL database |
+| `MONGODB_URI` | — | MongoDB connection URI |
+| `MONGODB_DATABASE` | `gofhir` | MongoDB database name |
 | `AUTH_ENABLED` | `false` | Enable SMART on FHIR auth |
 | `VALIDATION_ENABLED` | `true` | Enable resource validation |
 | `TERMINOLOGY_ENABLED` | `true` | Enable terminology service |
