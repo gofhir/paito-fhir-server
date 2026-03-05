@@ -1,0 +1,88 @@
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"
+      - "3501:3501"
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+
+      # ── Subscriptions (R5 Backport IG) ──
+      SUBSCRIPTION_ENABLED: "true"
+      SUBSCRIPTION_POLL_INTERVAL: "1s"
+      SUBSCRIPTION_BATCH_SIZE: "100"
+
+      # ── Broker: RabbitMQ ──
+      BROKER_DRIVER: "rabbitmq"
+      BROKER_INCLUDE_PAYLOAD: "true"
+      BROKER_PUBLISH_TIMEOUT: "2s"
+      BROKER_RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      BROKER_RABBITMQ_EXCHANGE: "fhir.events"
+      BROKER_RABBITMQ_EXCHANGE_TYPE: "topic"
+      BROKER_RABBITMQ_DURABLE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: paito-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

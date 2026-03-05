@@ -1,0 +1,162 @@
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"
+      - "3501:3501"
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+
+      # ── OpenTelemetry ──
+      OTEL_TRACING_ENABLED: "true"
+      OTEL_TRACING_EXPORTER: otlp
+      OTEL_TRACING_ENDPOINT: "otel-collector:4317"
+      OTEL_TRACING_SERVICE_NAME: paito-fhir-server
+      OTEL_METRICS_ENABLED: "true"
+      OTEL_LOGS_ENABLED: "true"
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_LOGS_ENDPOINT: "otel-collector:4317"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    container_name: paito-otel-collector
+    restart: unless-stopped
+    command: ["--config", "/etc/otel-collector.yaml"]
+    volumes:
+      - ./config/otel-collector.yaml:/etc/otel-collector.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    networks:
+      - paito-network
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: paito-tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./config/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+  loki:
+    image: grafana/loki:3.3.2
+    container_name: paito-loki
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki.yaml"]
+    volumes:
+      - ./config/loki.yaml:/etc/loki.yaml:ro
+      - loki_data:/loki
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: paito-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-remote-write-receiver"
+    volumes:
+      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: paito-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    ports:
+      - "3000:3000"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+  tempo_data:
+  loki_data:
+  prometheus_data:
+
+networks:
+  paito-network:
+    driver: bridge
