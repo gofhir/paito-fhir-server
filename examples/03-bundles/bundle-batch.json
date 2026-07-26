@@ -1,0 +1,21 @@
+{
+  "resourceType": "Bundle",
+  "type": "batch",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "Batch-OK" } ]
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "Batch-Bad" } ],
+        "gender": "NOT-A-REAL-GENDER"
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    }
+  ]
+}

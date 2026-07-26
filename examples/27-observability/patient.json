@@ -1,0 +1,19 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    {
+      "system": "http://hospital.example.org/mrn",
+      "value": "OBS-1001"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Telemetry",
+      "given": ["Olivia"]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1988-03-14"
+}

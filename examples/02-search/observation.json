@@ -1,0 +1,17 @@
+{
+  "resourceType": "Observation",
+  "status": "final",
+  "code": {
+    "coding": [
+      { "system": "http://loinc.org", "code": "8867-4", "display": "Heart rate" }
+    ]
+  },
+  "subject": { "reference": "Patient/__PATIENT_ID__" },
+  "effectiveDateTime": "2026-05-24T15:00:00Z",
+  "valueQuantity": {
+    "value": 72,
+    "unit": "beats/min",
+    "system": "http://unitsofmeasure.org",
+    "code": "/min"
+  }
+}

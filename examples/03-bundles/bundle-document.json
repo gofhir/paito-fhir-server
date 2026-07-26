@@ -1,0 +1,35 @@
+{
+  "resourceType": "Bundle",
+  "type": "document",
+  "identifier": {
+    "system": "urn:ietf:rfc:3986",
+    "value": "urn:uuid:99999999-9999-9999-9999-999999999999"
+  },
+  "timestamp": "2026-05-24T16:00:00Z",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "resource": {
+        "resourceType": "Composition",
+        "status": "final",
+        "type": {
+          "coding": [
+            { "system": "http://loinc.org", "code": "11488-4", "display": "Consult note" }
+          ]
+        },
+        "date": "2026-05-24T16:00:00Z",
+        "subject": { "reference": "urn:uuid:bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" },
+        "author": [ { "display": "Dr. House" } ],
+        "title": "Consult note for Bundle-Doc"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "Bundle-Doc", "given": [ "Patient" ] } ],
+        "gender": "unknown"
+      }
+    }
+  ]
+}

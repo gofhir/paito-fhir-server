@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Messaging overlay config for paito-fhir-server
+#
+# Mounted into the container at /app/config/messaging.yaml and selected via
+# CONFIG_PATH. It overlays only the `messaging` block on top of the image's
+# built-in defaults; storage and other settings come from environment variables
+# (STORAGE_DRIVER, POSTGRES_*, …), which take precedence.
+#
+# The messaging paradigm ($process-message) has NO environment-variable mapping,
+# so enabling it requires this YAML file.
+# ─────────────────────────────────────────────────────────────────────────────
+
+messaging:
+  processMessage:
+    # Register the shipped reference MessageProcessor. It persists every focus
+    # resource of an incoming message through the FHIR service layer
+    # (authorization, validation and audit all apply) and replies response.code
+    # = "ok". Intended for demos and as a template. With this OFF (default) the
+    # server replies "fatal-error" — the honest "not processed" default — so a
+    # sender never assumes a message took effect when it did not.
+    persistReference: true
+
+    # Restrict the reference processor to these event keys, each either
+    # "system|code" (from MessageHeader.eventCoding) or a bare event URI (from
+    # MessageHeader.eventUri). Empty = catch-all: handles any event.
+    events: []
+
+    # Enable the FHIR async messaging pattern: a $process-message?async=true
+    # request is validated synchronously, processed in the background, and
+    # answered with 202 + Content-Location to poll. Default false → async=true
+    # is declined with 422 (spec-conformant "not-supported").
+    async: true

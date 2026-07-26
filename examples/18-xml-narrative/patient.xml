@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Patient xmlns="http://hl7.org/fhir">
+  <name>
+    <use value="official"/>
+    <family value="XML-Created"/>
+    <given value="Grace"/>
+  </name>
+  <gender value="other"/>
+  <birthDate value="1990-07-04"/>
+</Patient>

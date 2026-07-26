@@ -1,0 +1,21 @@
+{
+  "resourceType": "ViewDefinition",
+  "resource": "Patient",
+  "status": "active",
+  "select": [
+    {
+      "column": [
+        {"name": "id", "path": "id"},
+        {"name": "family", "path": "name.family"}
+      ]
+    },
+    {
+      "forEach": "telecom",
+      "column": [
+        {"name": "telecom_system", "path": "system"},
+        {"name": "telecom_value", "path": "value"},
+        {"name": "telecom_use", "path": "use"}
+      ]
+    }
+  ]
+}

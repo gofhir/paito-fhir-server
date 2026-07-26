@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Admin profile — OAuth client seed (GitOps)
+# ─────────────────────────────────────────────────────────────────────────────
+# One demo confidential client, reconciled into the OAuth client store at boot
+# so the admin Clients page (and GET /api/clients) is non-empty on first launch.
+# Manage additional clients live via the Admin API (see examples/26-admin-api).
+# ─────────────────────────────────────────────────────────────────────────────
+clients:
+  - id: patient-portal
+    name: Patient Portal
+    secret: "seed-secret-do-not-use-in-prod"
+    redirectUris:
+      - "http://localhost:3500/callback"
+    grantTypes:
+      - authorization_code
+      - refresh_token
+    scopes:
+      - "patient/*.rs"
+      - "launch/patient"
+      - "openid"
+    confidential: true
+    active: true

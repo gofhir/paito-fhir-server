@@ -1,0 +1,19 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    {
+      "use": "official",
+      "system": "http://hospital.example.org/mrn",
+      "value": "MRN-77123"
+    }
+  ],
+  "name": [
+    {
+      "use": "official",
+      "family": "Garcia",
+      "given": ["Maria", "Elena"]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1990-05-15"
+}

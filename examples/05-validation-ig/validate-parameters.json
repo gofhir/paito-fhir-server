@@ -1,0 +1,17 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "resource",
+      "resource": {
+        "resourceType": "Patient",
+        "name": [{"family": "Doe"}],
+        "gender": "female"
+      }
+    },
+    {
+      "name": "profile",
+      "valueUri": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+    }
+  ]
+}

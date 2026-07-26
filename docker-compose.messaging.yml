@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Messaging ($process-message)
+# ─────────────────────────────────────────────────────────────────────────────
+# Boots the FHIR R4 messaging paradigm: POST a Bundle of type `message` to
+# /fhir/r4/$process-message and the server validates the envelope, validates the
+# Bundle against its declared meta.profile, checks MessageDefinition focus
+# cardinalities, then dispatches to a MessageProcessor.
+#
+# The messaging block has no environment-variable mapping, so it is enabled via
+# the mounted overlay config/messaging.yaml (selected with CONFIG_PATH). That
+# overlay turns on the shipped reference processor (persistReference: true, which
+# persists focus resources and replies "ok") and async delivery (async: true).
+#
+#   docker compose -f docker-compose.messaging.yml up -d
+#   bash examples/14-messaging/run.sh
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API  -> /fhir/r4
+      - "3501:3501"   # Admin API
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+      # Select the mounted overlay that enables messaging.processMessage.
+      # Storage settings above (env vars) override the file.
+      CONFIG_PATH: /app/config/messaging.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+      # Overlay config that turns on the $process-message paradigm (no env-var mapping)
+      - ./config/messaging.yaml:/app/config/messaging.yaml:ro
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

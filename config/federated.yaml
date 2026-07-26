@@ -1,0 +1,106 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# paito FHIR Server — Federated OIDC (Keycloak broker) configuration
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# paito is the SMART on FHIR authorization server for apps, and an OIDC Relying
+# Party to Keycloak for USER authentication (the broker pattern). The SMART app
+# talks only to paito; paito delegates login to Keycloak, validates the upstream
+# id_token (signature / iss / aud / exp / nonce) against the realm JWKS, maps the
+# federated (issuer, subject) identity to a real FHIR user, and issues its OWN
+# SMART tokens (iss = paito, never Keycloak's tokens).
+#
+# Mounted into the container at /app/configs/config.federated.yaml via CONFIG_PATH.
+# ══════════════════════════════════════════════════════════════════════════════
+
+fhir:
+  version: R4
+
+server:
+  host: "0.0.0.0"
+  port: 3500
+  mode: full
+  basePath: "/fhir/r4"
+  shutdownTimeout: 10s
+
+storage:
+  driver: postgres
+  postgres:
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    database: "${POSTGRES_DB}"
+    sslMode: disable
+    maxConns: 10
+    minConns: 2
+
+logging:
+  level: info
+  format: text
+
+# ── Admin API ON (GitOps seeds the SMART app client) ────────────────────────
+admin:
+  enabled: true
+  port: 3501
+  auth:
+    strategy: apikey
+    apiKeys:
+      - "${ADMIN_API_KEY}"
+  gitops:
+    enabled: true
+    clientsPath: "/app/configs/clients.federated.yaml"
+    reconcileOnStart: true
+    watchForChanges: false
+
+# ── SMART on FHIR in FEDERATED mode ─────────────────────────────────────────
+auth:
+  enabled: true
+  mode: federated
+  smart:
+    # paito's OWN issuer (root, no /fhir/r4): the OIDC callback route mounts at
+    # /auth/oidc/callback on the root router, and the redirect URI paito
+    # registers with Keycloak is issuer + "/auth/oidc/callback".
+    issuer: "http://localhost:3500"
+    signingAlgorithm: RS384
+    accessTokenTTL: 3600
+    refreshTokenTTL: 86400
+    codeExpirySeconds: 300
+  federated:
+    # Keycloak realm issuer — identical from paito (server-to-server via the
+    # host-gateway mapping) and from the host (curl --resolve).
+    discoveryURL: "http://host.docker.internal:8081/realms/gofhir"
+    clientId: "gofhir-server"
+    clientSecret: "gofhir-kc-secret-do-not-use-in-prod"
+    scopes: ["openid", "profile", "email", "roles"]
+    fhirUserClaim: "fhirUser"
+    # No fabrication: when Keycloak omits a fhirUser claim, resolve via the
+    # (issuer, subject) binding below; otherwise leave fhirUser empty.
+    fhirUserFallback: "none"
+    roleClaim: "realm_access.roles"
+    sessionKey: "paito-federated-session-key-change-me-0123456789abcdef"
+    roleMapping:
+      clinician: ["openid", "fhirUser", "launch/patient", "patient/Patient.read", "user/Patient.read", "offline_access"]
+    # Bind the Keycloak user (stable issuer + subject) to a real FHIR resource.
+    # subject = the user's fixed id in realm-gofhir.json (Keycloak `sub`).
+    userBindings:
+      - issuer: "http://host.docker.internal:8081/realms/gofhir"
+        subject: "11111111-1111-1111-1111-111111111111"
+        fhirUser: "Practitioner/dr-smith"
+  scopes:
+    enforceOnRead: true
+
+terminology:
+  enabled: false
+
+observability:
+  tracing:
+    enabled: false
+  metrics:
+    enabled: false
+
+subscription:
+  enabled: false
+broker:
+  enabled: false
+mdm:
+  enabled: false

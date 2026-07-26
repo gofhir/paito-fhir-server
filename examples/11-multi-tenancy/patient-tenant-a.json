@@ -1,0 +1,17 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    {
+      "system": "http://example.org/tenant",
+      "value": "__MARK__-read"
+    }
+  ],
+  "name": [
+    {
+      "family": "IsoA",
+      "given": ["Alice"]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1985-03-14"
+}

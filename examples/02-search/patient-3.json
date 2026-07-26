@@ -1,0 +1,11 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    { "system": "http://hospital.example/mrn", "value": "SD-003" }
+  ],
+  "name": [
+    { "family": "SearchDemo", "given": ["Carla"] }
+  ],
+  "gender": "female",
+  "birthDate": "1995-06-15"
+}

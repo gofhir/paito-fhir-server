@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — FHIR as Code (GitOps)
+# ─────────────────────────────────────────────────────────────────────────────
+# Boots the server with the top-level `gitops:` reconciler ON. On startup it
+# reconciles every *.json file under the mounted repo directory
+# (./config/gitops-repo → /app/fhir-resources) into the store: each resource is
+# upserted by id and tagged http://gofhir.io/fhir/gitops|paito-repo, and — with
+# prune ON — resources removed from the repo are deleted on the next pass.
+#
+# The server reads its config from the mounted config/gitops.yaml (CONFIG_PATH),
+# the paito translation of the go-fhir-server gitops smoke profile.
+#
+#   docker compose -f docker-compose.gitops.yml up -d
+#   bash examples/20-fhir-as-code/run.sh
+#
+# Try it live: edit or delete a file under ./config/gitops-repo/ and within
+# watchIntervalSeconds (10s) the server re-reconciles — new/changed resources
+# appear, removed ones are pruned (410 Gone). To reset everything: `... down -v`.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API   -> /fhir/r4
+      - "3501:3501"   # Admin API  (disabled in this profile)
+    environment:
+      # Storage
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      # Select the mounted config file
+      CONFIG_PATH: /app/config/gitops.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/gitops.yaml:/app/config/gitops.yaml:ro
+      - ./config/gitops-repo:/app/fhir-resources:ro   # the "Git repo" of FHIR resources
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

@@ -1,0 +1,16 @@
+{
+  "resourceType": "CodeSystem",
+  "id": "paito-local-lab",
+  "url": "http://paito.example.org/fhir/CodeSystem/local-lab",
+  "version": "1.0.0",
+  "name": "PaitoLocalLab",
+  "title": "Paito Local Laboratory Codes",
+  "status": "active",
+  "content": "complete",
+  "description": "Small local lab code system managed declaratively via FHIR as Code.",
+  "concept": [
+    { "code": "GLU", "display": "Glucose" },
+    { "code": "HGB", "display": "Hemoglobin" },
+    { "code": "CRE", "display": "Creatinine" }
+  ]
+}

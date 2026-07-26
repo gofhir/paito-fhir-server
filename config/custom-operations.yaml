@@ -1,0 +1,19 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Custom Operations overlay config for paito-fhir-server
+#
+# This file is mounted into the container at /app/config/custom-operations.yaml
+# and selected via CONFIG_PATH. It only overlays the fields below on top of the
+# image's built-in defaults; storage and other settings come from environment
+# variables (STORAGE_DRIVER, POSTGRES_*, …) which take precedence.
+#
+# `operations.exampleEcho` has no environment-variable mapping, so enabling the
+# shipped reference custom operation ($example-echo) requires this YAML file.
+# ─────────────────────────────────────────────────────────────────────────────
+
+operations:
+  # Register the shipped reference custom operation $example-echo (a template):
+  #   • its OperationDefinition is served at /OperationDefinition/example-echo
+  #   • it is advertised in the CapabilityStatement (rest.operation)
+  #   • it is invocable at POST /$example-echo
+  # Replace it with your own operation for real use.
+  exampleEcho: true

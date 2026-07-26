@@ -1,0 +1,94 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Paito FHIR Server — Validation, Profiles & Implementation Guides
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# This profile turns on:
+#   • admin API + GitOps reconciliation — the packages list below is consumed
+#     at boot to install US Core 5.0.1 + IPS 1.1.0 from packages.fhir.org
+#   • terminology service — profile bindings (required + extensible) resolve
+#     ValueSets at $validate time; the installed IGs bring their own ValueSet
+#     expansions, so no local codeSystems[] are required.
+#   • validation — $validate against base FHIR + installed IG profiles
+#
+# Mounted into the container at /app/config/validation-ig.yaml and selected
+# via CONFIG_PATH. See docker-compose.validation-ig.yml.
+# ══════════════════════════════════════════════════════════════════════════════
+
+fhir:
+  version: R4
+
+server:
+  host: "0.0.0.0"
+  port: 3500
+  mode: full
+  basePath: "/fhir/r4"
+  shutdownTimeout: 15s
+
+storage:
+  driver: postgres
+  postgres:
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    database: "${POSTGRES_DB}"
+    sslMode: disable
+    maxConns: 10
+    minConns: 2
+
+logging:
+  level: info
+  format: text
+
+# ── Admin API ON — GitOps consumes packages-validation-ig.yaml at boot ──────
+admin:
+  enabled: true
+  port: 3501
+  auth:
+    strategy: apikey
+    apiKeys:
+      - "${ADMIN_API_KEY}"
+  rbac:
+    enabled: false
+  gitops:
+    enabled: true
+    packagesPath: "/app/config/packages-validation-ig.yaml"
+    reconcileOnStart: true
+    watchForChanges: false
+
+auth:
+  enabled: false
+
+# ── Validation ON ───────────────────────────────────────────────────────────
+validation:
+  enabled: true
+  mode: enforced
+  terminology:
+    mode: internal
+
+# ── Terminology ON so US Core / IPS binding strengths are enforced ──────────
+terminology:
+  enabled: true
+  remote:
+    enabled: false
+
+# FHIR package cache — persisted to a named volume so re-runs don't
+# re-download US Core / IPS (~7 MB) from packages.fhir.org on every boot.
+packages:
+  cacheDir: "/app/.fhir/packages"
+  offline: false
+  resolveDependencies: true
+  downloadTimeout: 60
+
+observability:
+  tracing:
+    enabled: false
+  metrics:
+    enabled: false
+
+subscription:
+  enabled: false
+broker:
+  enabled: false
+mdm:
+  enabled: false

@@ -1,0 +1,16 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "resource",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "p2"
+      }
+    },
+    {
+      "name": "note",
+      "valueString": "wrapped"
+    }
+  ]
+}

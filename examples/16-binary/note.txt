@@ -1,0 +1,2 @@
+Discharge summary — patient stable, follow up in 2 weeks.
+This raw text file is uploaded as-is and wrapped into a FHIR Binary resource.

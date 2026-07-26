@@ -1,0 +1,13 @@
+{
+  "resourceType": "Patient",
+  "id": "cql-demo-patient",
+  "active": true,
+  "name": [
+    {
+      "family": "Reyes",
+      "given": ["Camila"]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1985-04-12"
+}

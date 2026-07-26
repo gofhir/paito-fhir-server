@@ -1,0 +1,13 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "subject",
+      "valueString": "Patient/cql-demo-patient"
+    },
+    {
+      "name": "expression",
+      "valueString": "InInitialPopulation"
+    }
+  ]
+}

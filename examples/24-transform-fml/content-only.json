@@ -1,0 +1,15 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "content",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "example2",
+        "name": [{ "family": "Nguyen", "given": ["An"] }],
+        "gender": "male",
+        "birthDate": "1985-11-02"
+      }
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Terminology Service
+# ─────────────────────────────────────────────────────────────────────────────
+# Boots the FHIR terminology service ($expand / $lookup / $validate-code /
+# $subsumes / $translate / $closure) on the EMBEDDED FHIR R4 packages, which
+# ship inside the image (administrative-gender & other core ValueSets, UCUM,
+# ISO 3166-1 country codes). No licensed data files are required to run this.
+#
+# To load real clinical code systems (SNOMED CT, LOINC, ICD-10, FONASA),
+# uncomment the opt-in block below and mount the licensed source files. See
+# docs/terminology.md and site docs terminology-guide/loading-terminologies.md.
+#
+#   docker compose -f docker-compose.terminology.yml up -d
+#   bash examples/06-terminology/run.sh
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API  -> /fhir/r4
+      - "3501:3501"   # Admin API
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+
+      # ── Terminology Service ON ──
+      # Enables the operation handlers ($expand, $lookup, $validate-code,
+      # $subsumes, $translate, $closure). With no codeSystems configured the
+      # server serves the embedded FHIR R4 packages (core ValueSets + UCUM +
+      # ISO 3166-1). Remote fallback (tx.fhir.org) is OFF unless configured.
+      TERMINOLOGY_ENABLED: "true"
+
+      # ── OPT-IN: load real clinical terminologies (licensed files) ──
+      # Place the source archives under ./terminology and uncomment both the
+      # env vars and the volume mount at the bottom of this service.
+      # TERMINOLOGY_SNOMED_PATH: "/app/terminology/SnomedCT.zip"
+      # TERMINOLOGY_SNOMED_VERSION: "20251201"
+      # TERMINOLOGY_LOINC_PATH: "/app/terminology/Loinc.zip"
+      # TERMINOLOGY_LOINC_VERSION: "2.81"
+      # TERMINOLOGY_ICD10_PATH: "/app/terminology/icd10.zip"
+      # TERMINOLOGY_FONASA_PATH: "/app/terminology/fonasa-mle.xlsx"
+      #
+      # Or download at startup from a URL instead of a mounted file:
+      # TERMINOLOGY_SNOMED_URL: "https://my-bucket.example.com/SnomedCT.zip"
+      # TERMINOLOGY_SNOMED_VERSION: "20251201"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+      # ── OPT-IN: mount licensed terminology source files (read-only) ──
+      # - ./terminology:/app/terminology:ro
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

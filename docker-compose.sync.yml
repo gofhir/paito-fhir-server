@@ -1,0 +1,67 @@
+services:
+  # ── CLOUD peer ──────────────────────────────────────────────────────────────
+  # An edge-mode server (embedded SQLite, zero external services). Plays the role
+  # of the upstream "cloud" that the edge replicates from / to.
+  cloud:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-sync-cloud
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API (cloud)
+    environment:
+      SERVER_MODE: edge          # forces embedded SQLite + enables POST /$sync + /_changes
+      SERVER_PORT: "3500"
+      SERVER_BASE_PATH: /fhir/r4
+      SQLITE_PATH: /app/data/cloud.db
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+    volumes:
+      - cloud_data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3500/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - paito-sync
+
+  # ── EDGE peer ───────────────────────────────────────────────────────────────
+  # A second edge-mode server. It reaches the cloud over the compose network by
+  # DNS name ("cloud"), which resolves to a private (non-loopback) IP — the sync
+  # egress guard always blocks loopback/link-local/cloud-metadata, so a peer must
+  # never be addressed as localhost.
+  edge:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-sync-edge
+    restart: unless-stopped
+    ports:
+      - "3510:3500"   # FHIR API (edge) exposed on host :3510
+    environment:
+      SERVER_MODE: edge
+      SERVER_PORT: "3500"
+      SERVER_BASE_PATH: /fhir/r4
+      SQLITE_PATH: /app/data/edge.db
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+    volumes:
+      - edge_data:/app/data
+    depends_on:
+      cloud:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3500/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - paito-sync
+
+volumes:
+  cloud_data:
+  edge_data:
+
+networks:
+  paito-sync:
+    driver: bridge

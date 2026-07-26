@@ -1,0 +1,98 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Paito FHIR Server — SMART on FHIR — OAuth Client Seed (GitOps)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Demo confidential clients with progressively narrower scopes so you can see
+# SMART scope enforcement in action. Reconciled at startup by the admin GitOps
+# controller (admin.gitops.clientsPath). Secrets resolve from the compose env.
+#
+#   demo-full      system/*.cruds                         → read AND write
+#   demo-readonly  system/Patient.rs                      → read Patient only
+#   demo-noscope   (no scopes)                            → cannot read anything
+#   demo-granular  system/Observation.rs?category=laboratory → lab Obs only (v2)
+#   demo-backend   private_key_jwt (asymmetric, RFC 7523) → Backend Services
+#   demo-app       authorization_code + PKCE + refresh    → SMART App Launch
+#
+# DO NOT use these secrets in production.
+# ══════════════════════════════════════════════════════════════════════════════
+
+clients:
+  - id: demo-full
+    name: Demo Full Access
+    secret: "${DEMO_FULL_SECRET}"
+    redirectUris: []
+    grantTypes:
+      - client_credentials
+    scopes:
+      - system/*.cruds
+    confidential: true
+    active: true
+
+  - id: demo-readonly
+    name: Demo Read-Only Patient
+    secret: "${DEMO_READONLY_SECRET}"
+    redirectUris: []
+    grantTypes:
+      - client_credentials
+    scopes:
+      - system/Patient.rs
+    confidential: true
+    active: true
+
+  - id: demo-noscope
+    name: Demo No Scopes (negative test)
+    secret: "${DEMO_NOSCOPE_SECRET}"
+    redirectUris: []
+    grantTypes:
+      - client_credentials
+    scopes: []
+    confidential: true
+    active: true
+
+  # SMART v2 granular sub-scope: only laboratory Observations. Proves the server
+  # ENFORCES the ?category= filter (search narrows + non-matching reads denied).
+  - id: demo-granular
+    name: Demo Granular (lab Observations only)
+    secret: "${DEMO_GRANULAR_SECRET}"
+    redirectUris: []
+    grantTypes:
+      - client_credentials
+    scopes:
+      - "system/Observation.rs?category=laboratory"
+    confidential: true
+    active: true
+
+  # SMART Backend Services client using asymmetric auth (private_key_jwt,
+  # RFC 7523). No secret: the server verifies the signed client_assertion
+  # against the public keys at jwksUri. The example hosts that JWKS on the host,
+  # reachable from the container via host.docker.internal:9443.
+  - id: demo-backend
+    name: Demo Backend Services (private_key_jwt)
+    redirectUris: []
+    grantTypes:
+      - client_credentials
+    scopes:
+      - "system/Patient.rs"
+    confidential: true
+    active: true
+    jwksUri: "http://host.docker.internal:9443/jwks.json"
+
+  # Confidential SMART app exercising the authorization_code flow (consent +
+  # PKCE S256) and refresh_token. redirectUris are matched exactly;
+  # offline_access yields a refresh_token, openid yields an id_token.
+  - id: demo-app
+    name: Demo SMART App (auth code + PKCE)
+    secret: "${DEMO_APP_SECRET}"
+    redirectUris:
+      - "http://localhost:9999/callback"
+    grantTypes:
+      - authorization_code
+      - refresh_token
+    scopes:
+      - openid
+      - fhirUser
+      - offline_access
+      - launch/patient
+      - patient/Patient.read
+    confidential: true
+    active: true

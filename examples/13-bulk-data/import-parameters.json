@@ -1,0 +1,14 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    { "name": "inputFormat", "valueCode": "application/fhir+ndjson" },
+    { "name": "inputSource", "valueUri": "https://origin.example.org" },
+    {
+      "name": "input",
+      "part": [
+        { "name": "type", "valueCode": "Patient" },
+        { "name": "url", "valueUrl": "https://storage.example.org/fhir-imports/patients.ndjson" }
+      ]
+    }
+  ]
+}

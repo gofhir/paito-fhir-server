@@ -1,0 +1,19 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "source",
+      "valueUri": "http://example.org/fhir/StructureMap/PatientNormalize"
+    },
+    {
+      "name": "content",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "example",
+        "name": [{ "family": "Garcia", "given": ["Maria"] }],
+        "gender": "female",
+        "birthDate": "1990-03-15"
+      }
+    }
+  ]
+}

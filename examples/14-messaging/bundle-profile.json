@@ -1,0 +1,21 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "PaitoMsgBundle",
+  "url": "http://example.org/StructureDefinition/PaitoMsgBundle",
+  "name": "PaitoMsgBundle",
+  "status": "active",
+  "kind": "resource",
+  "abstract": false,
+  "type": "Bundle",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Bundle",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Bundle.entry",
+        "path": "Bundle.entry",
+        "min": 3
+      }
+    ]
+  }
+}

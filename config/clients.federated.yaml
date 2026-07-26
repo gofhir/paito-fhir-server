@@ -1,0 +1,27 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# paito FHIR Server — Federated — SMART App client (GitOps)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# The SMART app that talks to paito (which in turn federates user login to
+# Keycloak). authorization_code + PKCE, confidential. paito issues its OWN tokens
+# to this app — the app never sees Keycloak's tokens.
+# ══════════════════════════════════════════════════════════════════════════════
+
+clients:
+  - id: smoke-fed-app
+    name: Federated SMART App
+    secret: "${SMOKE_FED_APP_SECRET}"
+    redirectUris:
+      - "http://localhost:9999/callback"
+    grantTypes:
+      - authorization_code
+      - refresh_token
+    scopes:
+      - openid
+      - fhirUser
+      - offline_access
+      - launch/patient
+      - patient/Patient.read
+      - user/Patient.read
+    confidential: true
+    active: true

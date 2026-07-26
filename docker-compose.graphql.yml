@@ -1,0 +1,62 @@
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR REST + GraphQL (/graphql)
+      - "3501:3501"   # Admin API
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+
+      # ── GraphQL transport (disabled by default; opt-in here) ──
+      GRAPHQL_ENABLED: "true"
+      GRAPHQL_PLAYGROUND: "true"        # serve the GraphQL Playground UI on GET /graphql
+      GRAPHQL_INTROSPECTION: "true"     # allow __schema / __type introspection queries
+      GRAPHQL_COMPLEXITY_LIMIT: "1000"  # max query complexity score (0 = unlimited)
+      GRAPHQL_MAX_DEPTH: "10"           # max query nesting depth (0 = unlimited)
+      GRAPHQL_TIMEOUT: "30s"            # per-query execution timeout
+      # GRAPHQL_SUBSCRIPTIONS: "true"   # WebSocket subscriptions (requires a broker)
+
+      # Production hardening: set both to "false" to prevent schema discovery.
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

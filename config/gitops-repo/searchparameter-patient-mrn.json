@@ -1,0 +1,13 @@
+{
+  "resourceType": "SearchParameter",
+  "id": "paito-patient-mrn",
+  "url": "http://paito.example.org/fhir/SearchParameter/patient-mrn",
+  "version": "1.0.0",
+  "name": "PaitoPatientMRN",
+  "status": "active",
+  "description": "Search Patient by local MRN identifier, managed declaratively via FHIR as Code.",
+  "code": "mrn",
+  "base": ["Patient"],
+  "type": "token",
+  "expression": "Patient.identifier.where(system='http://paito.example.org/fhir/sid/mrn')"
+}

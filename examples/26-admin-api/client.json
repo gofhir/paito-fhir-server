@@ -1,0 +1,9 @@
+{
+  "name": "backend-service",
+  "secret": "backend-secret-do-not-use-in-prod",
+  "redirectUris": [],
+  "grantTypes": ["client_credentials"],
+  "scopes": ["system/Patient.rs", "system/Observation.rs"],
+  "confidential": true,
+  "active": true
+}

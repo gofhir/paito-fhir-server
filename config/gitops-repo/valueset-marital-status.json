@@ -1,0 +1,23 @@
+{
+  "resourceType": "ValueSet",
+  "id": "paito-marital-status",
+  "url": "http://paito.example.org/fhir/ValueSet/marital-status",
+  "version": "1.0.0",
+  "name": "PaitoMaritalStatus",
+  "title": "Paito Marital Status",
+  "status": "active",
+  "description": "Curated marital-status value set managed declaratively via FHIR as Code.",
+  "compose": {
+    "include": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
+        "concept": [
+          { "code": "S", "display": "Never Married" },
+          { "code": "M", "display": "Married" },
+          { "code": "D", "display": "Divorced" },
+          { "code": "W", "display": "Widowed" }
+        ]
+      }
+    ]
+  }
+}

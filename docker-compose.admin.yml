@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Admin API & Web Dashboard
+# ─────────────────────────────────────────────────────────────────────────────
+# Boots the FHIR API on :3500 and the separate Admin API + Web UI on :3501.
+# The admin surface is protected by an API key (ADMIN_API_KEY) plus RBAC, and
+# GitOps seeds one demo OAuth client at boot. The server reads its config from
+# the mounted config/admin.yaml (CONFIG_PATH).
+#
+#   docker compose -f docker-compose.admin.yml up -d
+#   # FHIR:      http://localhost:3500/fhir/r4/metadata
+#   # Admin API: http://localhost:3501/api/clients   (needs X-Admin-API-Key)
+#   # Web UI:    http://localhost:3501/ui/
+#   bash examples/26-admin-api/run.sh
+#
+# Reset everything: docker compose -f docker-compose.admin.yml down -v
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API   -> /fhir/r4
+      - "3501:3501"   # Admin API + Web Dashboard (/ui/)
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      # Admin API key — resolves into admin.auth.apiKeys in config/admin.yaml.
+      # Change this before exposing the admin port anywhere non-local.
+      ADMIN_API_KEY: paito-admin-key-change-me
+      # Select the mounted config file
+      CONFIG_PATH: /app/config/admin.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/admin.yaml:/app/config/admin.yaml:ro
+      - ./config/admin-clients.yaml:/app/config/admin-clients.yaml:ro
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

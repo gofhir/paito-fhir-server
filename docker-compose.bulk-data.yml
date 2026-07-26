@@ -1,0 +1,82 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# paito FHIR Server — Bulk Data Access ($export)
+#
+# Same topology as the base docker-compose.yml (paito + postgres), plus the two
+# env vars that turn on the FHIR Bulk Data Access IG endpoints:
+#     GET  /fhir/r4/$export                 (system-level)
+#     GET  /fhir/r4/Patient/$export         (patient compartment, all patients)
+#     GET  /fhir/r4/Patient/{id}/$export    (single patient compartment)
+#     GET  /fhir/r4/Group/{id}/$export      (group members)
+#     GET  /fhir/r4/_bulkstatus/{jobId}     (poll)
+#     GET  /fhir/r4/_bulkdata/{jobId}/{file} (download NDJSON)
+#     DELETE /fhir/r4/_bulkstatus/{jobId}   (cancel)
+#
+# Bulk data export is DISABLED by default; only BULK_DATA_ENABLED / BULK_DATA_DIR
+# are exposed as env vars. Advanced knobs (maxConcurrentJobs, retentionPeriod,
+# and the experimental $import allowlist) live in the yaml config — see the
+# commented CONFIG_PATH block below and docs/bulk-data.md.
+#
+#   docker compose -f docker-compose.bulk-data.yml up -d
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API
+      - "3501:3501"   # Admin API
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+
+      # ── Bulk Data Access IG ($export) ──
+      BULK_DATA_ENABLED: "true"
+      BULK_DATA_DIR: /app/data/bulkdata
+
+      # ── Experimental $import (opt-in, off by default) ──
+      # $import is a draft/unratified operation and an SSRF primitive, so it is
+      # ONLY configurable via yaml (an allowlist is mandatory). To enable it,
+      # uncomment CONFIG_PATH + the volume below and edit config/bulk-data.yaml.
+      # CONFIG_PATH: /app/config/bulk-data.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+      # - ./config/bulk-data.yaml:/app/config/bulk-data.yaml:ro
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

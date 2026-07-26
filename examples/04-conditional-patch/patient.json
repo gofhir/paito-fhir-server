@@ -1,0 +1,10 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    { "system": "http://hospital.example/mrn", "value": "MRN-COND-001" }
+  ],
+  "name": [
+    { "family": "Cond-Create", "given": ["Ada"] }
+  ],
+  "gender": "unknown"
+}

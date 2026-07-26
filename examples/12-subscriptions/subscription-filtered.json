@@ -1,0 +1,11 @@
+{
+  "resourceType": "Subscription",
+  "status": "requested",
+  "reason": "Monitor vital-signs observations only",
+  "criteria": "Observation?category=vital-signs",
+  "channel": {
+    "type": "rest-hook",
+    "endpoint": "http://host.docker.internal:9999/observations/webhook",
+    "payload": "application/fhir+json"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "resourceType": "MessageDefinition",
+  "id": "PaitoMDLab",
+  "url": "http://example.org/MessageDefinition/lab",
+  "status": "active",
+  "date": "2026-07-05",
+  "eventCoding": {
+    "system": "http://example.org/events",
+    "code": "lab-result"
+  },
+  "focus": [
+    {
+      "code": "Observation",
+      "min": 1,
+      "max": "1"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "resourceType": "Library",
+  "id": "example-cql",
+  "url": "http://example.org/Library/example-cql",
+  "version": "1.0.0",
+  "name": "ExampleCQL",
+  "title": "Example CQL Library",
+  "status": "active",
+  "experimental": true,
+  "type": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/library-type",
+        "code": "logic-library"
+      }
+    ]
+  },
+  "description": "Minimal CQL logic library defining InInitialPopulation, Denominator and Numerator (all true) for demonstration.",
+  "content": [
+    {
+      "contentType": "text/cql",
+      "data": "bGlicmFyeSBFeGFtcGxlQ1FMIHZlcnNpb24gJzEuMC4wJwp1c2luZyBGSElSIHZlcnNpb24gJzQuMC4xJwpjb250ZXh0IFBhdGllbnQKZGVmaW5lICJJbkluaXRpYWxQb3B1bGF0aW9uIjogdHJ1ZQpkZWZpbmUgIkRlbm9taW5hdG9yIjogdHJ1ZQpkZWZpbmUgIk51bWVyYXRvciI6IHRydWUK"
+    }
+  ]
+}

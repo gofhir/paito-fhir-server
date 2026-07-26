@@ -1,0 +1,16 @@
+{
+  "resourceType": "Bundle",
+  "type": "message",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "MessageHeader",
+        "id": "m1",
+        "eventCoding": {
+          "system": "http://example.org/events",
+          "code": "patient-admit"
+        }
+      }
+    }
+  ]
+}

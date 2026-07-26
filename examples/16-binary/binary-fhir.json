@@ -1,0 +1,8 @@
+{
+  "resourceType": "Binary",
+  "contentType": "text/plain",
+  "securityContext": {
+    "reference": "Patient/example"
+  },
+  "data": "SGVsbG8gRkhJUiBCaW5hcnkgKG5hdGl2ZSByZXNvdXJjZSk="
+}

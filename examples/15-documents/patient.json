@@ -1,0 +1,11 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    { "system": "http://hospital.example/mrn", "value": "DOC-100" }
+  ],
+  "name": [
+    { "family": "Document-Subject", "given": ["Ada"] }
+  ],
+  "gender": "female",
+  "birthDate": "1985-03-12"
+}

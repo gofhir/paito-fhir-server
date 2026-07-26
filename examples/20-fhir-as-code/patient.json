@@ -1,0 +1,15 @@
+{
+  "resourceType": "Patient",
+  "id": "hand-authored-1",
+  "identifier": [
+    {
+      "system": "http://paito.example.org/fhir/sid/mrn",
+      "value": "MRN-0001"
+    }
+  ],
+  "name": [
+    { "family": "Reyes", "given": ["Camila"] }
+  ],
+  "gender": "female",
+  "birthDate": "1990-04-12"
+}

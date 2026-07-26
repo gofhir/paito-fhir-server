@@ -1,0 +1,16 @@
+{
+  "resourceType": "Patient",
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Narrative-Demo",
+      "given": ["Ada"]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1985-03-12",
+  "telecom": [
+    { "system": "phone", "value": "555-0142", "use": "home" }
+  ]
+}

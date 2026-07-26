@@ -1,0 +1,7 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {"name": "url", "valueUri": "http://example.org/fhir/ValueSet/latam-countries"},
+    {"name": "coding", "valueCoding": {"system": "urn:iso:std:iso:3166", "code": "AR"}}
+  ]
+}

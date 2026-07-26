@@ -1,0 +1,20 @@
+{
+  "resourceType": "ValueSet",
+  "url": "http://example.org/fhir/ValueSet/latam-countries",
+  "status": "active",
+  "name": "LatamCountries",
+  "description": "Selected LATAM countries drawn from the embedded ISO 3166-1 CodeSystem.",
+  "compose": {
+    "include": [
+      {
+        "system": "urn:iso:std:iso:3166",
+        "concept": [
+          {"code": "CL", "display": "Chile"},
+          {"code": "AR", "display": "Argentina"},
+          {"code": "MX", "display": "Mexico"},
+          {"code": "BR", "display": "Brasil"}
+        ]
+      }
+    ]
+  }
+}

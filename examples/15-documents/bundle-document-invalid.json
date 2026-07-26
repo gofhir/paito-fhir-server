@@ -1,0 +1,21 @@
+{
+  "resourceType": "Bundle",
+  "type": "document",
+  "timestamp": "2026-05-24T16:00:00Z",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Composition",
+        "status": "final",
+        "title": "Missing Bundle.identifier",
+        "type": {
+          "coding": [
+            { "system": "http://loinc.org", "code": "11488-4" }
+          ]
+        },
+        "date": "2026-05-24T16:00:00Z",
+        "author": [{ "display": "x" }]
+      }
+    }
+  ]
+}

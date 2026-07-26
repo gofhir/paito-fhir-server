@@ -1,0 +1,46 @@
+{
+  "resourceType": "StructureMap",
+  "url": "http://example.org/fhir/StructureMap/PatientNormalize",
+  "name": "PatientNormalize",
+  "title": "Copy core Patient demographics into a target Patient",
+  "status": "draft",
+  "structure": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/Patient",
+      "mode": "source",
+      "alias": "src"
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/Patient",
+      "mode": "target",
+      "alias": "tgt"
+    }
+  ],
+  "group": [
+    {
+      "name": "PatientNormalize",
+      "typeMode": "none",
+      "input": [
+        { "name": "src", "type": "Patient", "mode": "source" },
+        { "name": "tgt", "type": "Patient", "mode": "target" }
+      ],
+      "rule": [
+        {
+          "name": "copyName",
+          "source": [{ "context": "src", "element": "name", "variable": "n" }],
+          "target": [{ "context": "tgt", "element": "name", "transform": "copy", "parameter": [{ "valueId": "n" }] }]
+        },
+        {
+          "name": "copyGender",
+          "source": [{ "context": "src", "element": "gender", "variable": "g" }],
+          "target": [{ "context": "tgt", "element": "gender", "transform": "copy", "parameter": [{ "valueId": "g" }] }]
+        },
+        {
+          "name": "copyBirthDate",
+          "source": [{ "context": "src", "element": "birthDate", "variable": "b" }],
+          "target": [{ "context": "tgt", "element": "birthDate", "transform": "copy", "parameter": [{ "valueId": "b" }] }]
+        }
+      ]
+    }
+  ]
+}

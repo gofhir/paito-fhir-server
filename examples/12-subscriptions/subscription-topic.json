@@ -1,0 +1,17 @@
+{
+  "resourceType": "SubscriptionTopic",
+  "url": "https://example.org/SubscriptionTopic/vital-signs",
+  "title": "New Vital-Signs Observation",
+  "status": "active",
+  "resourceTrigger": [
+    {
+      "resource": "Observation",
+      "supportedInteraction": ["create", "update"]
+    }
+  ],
+  "canFilterBy": [
+    { "resource": "Observation", "filterParameter": "patient" },
+    { "resource": "Observation", "filterParameter": "code" },
+    { "resource": "Observation", "filterParameter": "category" }
+  ]
+}

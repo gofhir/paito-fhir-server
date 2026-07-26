@@ -1,0 +1,31 @@
+{
+  "resourceType": "Patient",
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Garcia",
+      "given": ["Maria", "Elena"]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1990-05-15",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "+56912345678",
+      "use": "mobile"
+    },
+    {
+      "system": "email",
+      "value": "maria.garcia@example.com"
+    }
+  ],
+  "address": [
+    {
+      "use": "home",
+      "city": "Santiago",
+      "country": "CL"
+    }
+  ]
+}

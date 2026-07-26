@@ -1,0 +1,11 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "select": [
+    {
+      "column": [
+        {"name": "id", "path": "id"}
+      ]
+    }
+  ]
+}

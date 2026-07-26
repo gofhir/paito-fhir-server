@@ -1,0 +1,22 @@
+{
+  "resourceType": "ViewDefinition",
+  "resource": "Observation",
+  "status": "active",
+  "select": [
+    {
+      "column": [
+        {"name": "id", "path": "id"},
+        {"name": "status", "path": "status"},
+        {"name": "patient_ref", "path": "subject.reference"},
+        {"name": "effective_date", "path": "effectiveDateTime"},
+        {"name": "loinc_code", "path": "code.coding.where(system = 'http://loinc.org').code.first()"},
+        {"name": "loinc_display", "path": "code.coding.where(system = 'http://loinc.org').display.first()"},
+        {"name": "value", "path": "valueQuantity.value"},
+        {"name": "unit", "path": "valueQuantity.unit"}
+      ]
+    }
+  ],
+  "where": [
+    {"path": "status = 'final'"}
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "resourceType": "ViewDefinition",
+  "resource": "Patient",
+  "status": "active",
+  "select": [
+    {
+      "column": [
+        {"name": "id", "path": "id"},
+        {"name": "family", "path": "name.where(use = 'official').family"},
+        {"name": "given", "path": "name.where(use = 'official').given.first()"},
+        {"name": "gender", "path": "gender"},
+        {"name": "birth_date", "path": "birthDate"}
+      ]
+    }
+  ],
+  "where": [
+    {"path": "active = true"}
+  ]
+}

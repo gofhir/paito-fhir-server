@@ -1,0 +1,92 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Paito FHIR Server — SMART on FHIR / OAuth2 App Launch
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Boots the embedded SMART on FHIR authorization server with six demo OAuth
+# clients seeded via GitOps, a bootstrap login user for the consent flow, and
+# the AuditEvent trail enabled. Mirrors the go-fhir-server security smoke stack.
+#
+#   FHIR API:      http://localhost:3500/fhir/r4
+#   Admin API:     http://localhost:3501
+#   SMART config:  http://localhost:3500/.well-known/smart-configuration
+#   JWKS:          http://localhost:3500/.well-known/jwks.json
+#   Token:         http://localhost:3500/auth/token
+#
+# The bare docker-compose.auth.yml turns auth ON but seeds no clients or login
+# user; this file mounts config/smart-auth.yaml + config/clients.smart-auth.yaml
+# so the OAuth flows are runnable end-to-end.
+#
+# Launch:  docker compose -f docker-compose.smart-auth.yml up -d
+# ══════════════════════════════════════════════════════════════════════════════
+
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    # Reach the host-side JWKS server (Backend Services / private_key_jwt) at
+    # host.docker.internal (auto on Docker Desktop; explicit for Linux).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3500:3500"   # FHIR API
+      - "3501:3501"   # Admin API
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      POSTGRES_SSL_MODE: disable
+      FHIR_VERSION: R4
+      CONFIG_PATH: /app/config/smart-auth.yaml
+
+      # OAuth client secrets — referenced by clients.smart-auth.yaml.
+      DEMO_FULL_SECRET: demo-full-secret-do-not-use-in-prod
+      DEMO_READONLY_SECRET: demo-readonly-secret-do-not-use-in-prod
+      DEMO_NOSCOPE_SECRET: demo-noscope-secret-do-not-use-in-prod
+      DEMO_GRANULAR_SECRET: demo-granular-secret-do-not-use-in-prod
+      DEMO_APP_SECRET: demo-app-secret-do-not-use-in-prod
+      # Bootstrap login user for the authorization_code (consent) flow.
+      SMOKE_USER: demo-user
+      SMOKE_USER_PASSWORD: demo-user-pass-do-not-use-in-prod
+      # Admin API key (query /api/audit + manage /api/clients).
+      ADMIN_API_KEY: paito-smart-admin-key
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+      - ./config/smart-auth.yaml:/app/config/smart-auth.yaml:ro
+      - ./config/clients.smart-auth.yaml:/app/config/clients.smart-auth.yaml:ro
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

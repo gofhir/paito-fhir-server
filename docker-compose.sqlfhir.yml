@@ -1,0 +1,61 @@
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"
+      - "3501:3501"
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+
+      # ── SQL on FHIR v2 ──
+      SQLFHIR_ENABLED: "true"
+      SQLFHIR_ENGINE: "memory"            # memory (default) | postgres
+      SQLFHIR_DEFAULT_FORMAT: "ndjson"    # ndjson | csv | json
+      SQLFHIR_MAX_ROWS_SYNC: "10000"
+      SQLFHIR_MAX_RESOURCES: "50000"
+
+      # ── Async Export ($viewdefinition-export, opt-in) ──
+      SQLFHIR_EXPORT_ENABLED: "true"
+      SQLFHIR_EXPORT_TIMEOUT: "10m"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

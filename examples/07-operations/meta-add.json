@@ -1,0 +1,17 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {
+      "name": "meta",
+      "valueMeta": {
+        "tag": [
+          {
+            "system": "http://example.org/tags",
+            "code": "reviewed",
+            "display": "Chart reviewed"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "resourceType": "Patient",
+  "name": [{"family": "Everything-Test", "given": ["Ada"]}],
+  "gender": "female",
+  "birthDate": "1980-01-01"
+}

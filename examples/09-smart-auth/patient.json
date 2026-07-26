@@ -1,0 +1,12 @@
+{
+  "resourceType": "Patient",
+  "name": [
+    {
+      "use": "official",
+      "family": "SmartDemo",
+      "given": ["Auth"]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1985-04-12"
+}

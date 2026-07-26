@@ -1,0 +1,11 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    { "system": "urn:mrn", "value": "SUB-DEMO-001" }
+  ],
+  "name": [
+    { "family": "Sanhueza", "given": ["Camila"] }
+  ],
+  "gender": "female",
+  "birthDate": "1990-05-14"
+}

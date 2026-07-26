@@ -1,0 +1,79 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# paito FHIR Server — Multi-Tenancy isolation (header mode, strict)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Enables tenant data isolation in HEADER mode so every request selects its
+# tenant with a plain `X-Tenant-ID` header:
+#   • MULTI_TENANCY_ENABLED=true    → tenant_id WHERE-filter on every query
+#                                     + PostgreSQL Row-Level Security (RLS)
+#   • TENANT_HEADER_NAME=X-Tenant-ID
+#   • ALLOW_ANONYMOUS_TENANT=false  → a data request without a tenant → 401
+#
+# Public endpoints (/fhir/r4/metadata, /health) stay reachable WITHOUT a tenant.
+# Auth is OFF (header-only tenant identification — no OAuth). Do NOT run this in
+# production as-is: header-only tenant trust is only safe behind a gateway that
+# authenticates the caller and stamps X-Tenant-ID. For end-user auth, derive the
+# tenant from a signed JWT claim instead (JWT_SECRET + JWT_CLAIM_NAME).
+#
+# Launch:
+#   docker compose -f docker-compose.multitenancy.yml up -d
+#   curl -fsS http://localhost:3500/fhir/r4/metadata >/dev/null && echo ready
+#   bash examples/11-multi-tenancy/run.sh
+# ══════════════════════════════════════════════════════════════════════════════
+
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API
+      - "3501:3501"   # Admin API
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+
+      # ── Multi-tenancy: ON, header mode, strict (no anonymous) ──
+      MULTI_TENANCY_ENABLED: "true"
+      TENANT_HEADER_NAME: "X-Tenant-ID"
+      ALLOW_ANONYMOUS_TENANT: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

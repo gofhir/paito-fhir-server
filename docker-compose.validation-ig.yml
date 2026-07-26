@@ -1,0 +1,78 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Validation, Profiles & Implementation Guides
+# ─────────────────────────────────────────────────────────────────────────────
+# Boots the server with:
+#   • Admin API + GitOps reconciler — installs US Core 5.0.1 and IPS 1.1.0
+#     from packages.fhir.org at first boot (declared in config/packages-validation-ig.yaml)
+#   • Terminology service ON — so required/extensible bindings are enforced by $validate
+#   • Validation ON (mode: enforced)
+#
+# The server reads its config from the mounted config/validation-ig.yaml
+# (selected via CONFIG_PATH), which is the paito translation of the
+# go-fhir-server smoke-conformance profile.
+#
+#   docker compose -f docker-compose.validation-ig.yml up -d
+#   bash examples/05-validation-ig/run.sh
+#
+# First boot downloads ~7 MB of IG packages; the paito_igcache volume keeps
+# them so later boots skip the download. To reset everything: `... down -v`.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API   -> /fhir/r4
+      - "3501:3501"   # Admin API  (Bearer <ADMIN_API_KEY>)
+    environment:
+      # Storage
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      # Admin API key (also used by examples/05-validation-ig/run.sh)
+      ADMIN_API_KEY: paito-validation-key
+      # Select the mounted config file
+      CONFIG_PATH: /app/config/validation-ig.yaml
+      # Persist the downloaded IG .tgz files across restarts
+      FHIR_PACKAGE_CACHE: /app/.fhir/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/validation-ig.yaml:/app/config/validation-ig.yaml:ro
+      - ./config/packages-validation-ig.yaml:/app/config/packages-validation-ig.yaml:ro
+      - paito_data:/app/data
+      - paito_igcache:/app/.fhir/packages
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+  paito_igcache:
+
+networks:
+  paito-network:
+    driver: bridge

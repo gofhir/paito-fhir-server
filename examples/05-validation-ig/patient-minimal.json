@@ -1,0 +1,6 @@
+{
+  "resourceType": "Patient",
+  "name": [{"family": "Pérez", "given": ["María"]}],
+  "gender": "female",
+  "birthDate": "1985-03-15"
+}

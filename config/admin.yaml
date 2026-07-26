@@ -1,0 +1,95 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Admin API & Web UI profile
+# ─────────────────────────────────────────────────────────────────────────────
+# Boots the FHIR API on :3500 and the separate Admin API + Web Dashboard on
+# :3501. The admin surface is protected by an API key (apikey strategy) and
+# RBAC. GitOps seeds one demo OAuth client so GET /api/clients returns content
+# on first boot; the audit store is on so admin audit queries have events to
+# return.
+#
+# Translated from the go-fhir-server security smoke profile
+# (configs/config.smoke-security.yaml) — admin sections only, SMART auth off so
+# the FHIR side stays curl-friendly. The ${ADMIN_API_KEY} placeholder resolves
+# from the environment injected by docker-compose.admin.yml.
+# ─────────────────────────────────────────────────────────────────────────────
+
+fhir:
+  version: R4
+
+server:
+  host: "0.0.0.0"
+  port: 3500
+  mode: full
+  basePath: "/fhir/r4"
+  shutdownTimeout: 15s
+
+storage:
+  driver: postgres
+  postgres:
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    database: "${POSTGRES_DB}"
+    sslMode: disable
+    maxConns: 10
+    minConns: 2
+
+logging:
+  level: info
+  format: text
+
+# ── Audit store ON so /api/audit/events + /stats + /export have data ─────────
+audit:
+  enabled: true
+  level: "all"
+
+# ── Admin API + Web UI ───────────────────────────────────────────────────────
+admin:
+  enabled: true
+  port: 3501
+  auth:
+    strategy: apikey
+    apiKeys:
+      - "${ADMIN_API_KEY}"
+  # RBAC ON. A single API key with no explicit mapping defaults to the `super`
+  # role (full access to every resource:action), so the demo key can drive all
+  # of client/package/config/audit/storage management.
+  rbac:
+    enabled: true
+    roles:
+      super:
+        - "clients:*"
+        - "igs:*"
+        - "config:*"
+        - "audit:*"
+        - "health:*"
+        - "storage:*"
+      security:
+        - "clients:*"
+        - "audit:*"
+        - "health:read"
+      devops:
+        - "igs:*"
+        - "config:*"
+        - "storage:*"
+        - "health:*"
+      readonly:
+        - "clients:read"
+        - "igs:read"
+        - "config:read"
+        - "audit:read"
+        - "health:read"
+        - "storage:read"
+  # GitOps seeds one OAuth client at boot so the Clients page / GET /api/clients
+  # is non-empty before you create your own.
+  gitops:
+    enabled: true
+    clientsPath: "/app/config/admin-clients.yaml"
+    reconcileOnStart: true
+    watchForChanges: false
+
+# FHIR-side SMART auth is OFF in this profile to keep the FHIR API curl-friendly.
+# The admin API is still fully protected by its own API key + RBAC (above).
+auth:
+  enabled: false

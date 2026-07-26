@@ -1,0 +1,10 @@
+map "http://example.org/fhir/StructureMap/PatientNormalizeFML" = "PatientNormalizeFML"
+
+uses "http://hl7.org/fhir/StructureDefinition/Patient" alias Patient as source
+uses "http://hl7.org/fhir/StructureDefinition/Patient" alias Patient as target
+
+group PatientNormalize(source src : Patient, target tgt : Patient) {
+  src.name as n -> tgt.name = n "copyName";
+  src.gender as g -> tgt.gender = g "copyGender";
+  src.birthDate as b -> tgt.birthDate = b "copyBirthDate";
+}

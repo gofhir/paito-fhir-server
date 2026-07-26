@@ -1,0 +1,21 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "TX-Should-NOT-Persist" } ]
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "TX-Bad" } ],
+        "gender": "NOT-A-REAL-GENDER"
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    }
+  ]
+}

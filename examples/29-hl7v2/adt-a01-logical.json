@@ -1,0 +1,31 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "adt-a01-logical",
+  "url": "http://example.org/StructureDefinition/ADT-A01",
+  "name": "ADT-A01",
+  "status": "active",
+  "kind": "logical",
+  "type": "ADT-A01",
+  "abstract": false,
+  "mapping": [
+    { "identity": "v2", "name": "HL7 v2", "uri": "http://hl7.org/v2" }
+  ],
+  "differential": {
+    "element": [
+      { "path": "ADT-A01", "min": 0, "max": "1" },
+      { "path": "ADT-A01.PID", "min": 1, "max": "1", "type": [{ "code": "BackboneElement" }] },
+      { "path": "ADT-A01.PID.patientId", "min": 0, "max": "*", "type": [{ "code": "BackboneElement" }], "mapping": [{ "identity": "v2", "map": "PID.3" }] },
+      { "path": "ADT-A01.PID.patientId.value", "min": 1, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "PID.3.1" }] },
+      { "path": "ADT-A01.PID.patientId.authority", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "PID.3.4" }] },
+      { "path": "ADT-A01.PID.patientId.typeCode", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "PID.3.5" }] },
+      { "path": "ADT-A01.PID.familyName", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "PID.5.1" }] },
+      { "path": "ADT-A01.PID.givenName", "min": 0, "max": "*", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "PID.5.2" }] },
+      { "path": "ADT-A01.PID.dateOfBirth", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "PID.7" }] },
+      { "path": "ADT-A01.PID.gender", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "PID.8" }] },
+      { "path": "ADT-A01.NK1", "min": 0, "max": "*", "type": [{ "code": "BackboneElement" }] },
+      { "path": "ADT-A01.NK1.familyName", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "NK1.2.1" }] },
+      { "path": "ADT-A01.NK1.givenName", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "NK1.2.2" }] },
+      { "path": "ADT-A01.NK1.relationship", "min": 0, "max": "1", "type": [{ "code": "string" }], "mapping": [{ "identity": "v2", "map": "NK1.3" }] }
+    ]
+  }
+}

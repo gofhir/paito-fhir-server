@@ -1,0 +1,90 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Clinical Reasoning (CQL, Measures, CRMI, CDS Hooks)
+# ─────────────────────────────────────────────────────────────────────────────
+# This is the terminology stack (see docker-compose.terminology.yml) PLUS the
+# clinical-reasoning feature flags. It shares the same postgres + paito topology;
+# the extra env vars turn on the CQL engine, quality-measure evaluation, the CRMI
+# artifact-lifecycle operations, and CDS Hooks 2.0.
+#
+# What gets enabled:
+#   • CRMI lifecycle ops ($draft/$revise/$approve/$release/$retire/$clone/$package)
+#     and $data-requirements are ALWAYS available (they only need storage).
+#   • $evaluate-measure, $care-gaps, $collect-data and Library/$evaluate require
+#     CQL_ENABLED=true (they use the CQL engine).
+#   • The /cds-services routes (Discovery / Hook / Feedback) require BOTH
+#     CQL_ENABLED=true and CDS_HOOKS_ENABLED=true.
+#   • TERMINOLOGY_ENABLED=true wires the ValueSet-membership provider the CQL
+#     engine uses for `in ValueSet` checks.
+#
+# Run:
+#   docker compose -f docker-compose.clinical-reasoning.yml up -d
+#   bash examples/23-clinical-reasoning/run.sh
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API  -> /fhir/r4  (CDS Hooks at /cds-services)
+      - "3501:3501"   # Admin API
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+
+      # ── Terminology (ValueSet membership for CQL `in ValueSet`) ──
+      TERMINOLOGY_ENABLED: "true"
+
+      # ── CQL engine (powers $evaluate-measure + Library/$evaluate) ──
+      CQL_ENABLED: "true"
+      CQL_EVAL_TIMEOUT: "30s"
+      CQL_MAX_RETRIEVE_SIZE: "10000"
+
+      # ── CDS Hooks 2.0 (mounts /cds-services) ──
+      CDS_HOOKS_ENABLED: "true"
+      CDS_HOOKS_MAX_ACTIONS: "50"
+      CDS_HOOKS_EVAL_TIMEOUT: "10s"
+      CDS_HOOKS_REFRESH_INTERVAL: "5m"
+
+      # ── CRMI artifact lifecycle ──
+      CRMI_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

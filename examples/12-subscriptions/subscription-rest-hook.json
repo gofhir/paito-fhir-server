@@ -1,0 +1,14 @@
+{
+  "resourceType": "Subscription",
+  "status": "requested",
+  "reason": "Monitor patient changes for integration",
+  "criteria": "Patient?",
+  "channel": {
+    "type": "rest-hook",
+    "endpoint": "http://host.docker.internal:9999/fhir/notify",
+    "payload": "application/fhir+json",
+    "header": [
+      "Authorization: Bearer my-webhook-token"
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Edge Mode
+#
+# The FULL FHIR API (CRUD, search, validate, history, transactions) as a single
+# self-contained process backed by embedded SQLite. No PostgreSQL, no message
+# broker, no network access at boot. Setting SERVER_MODE=edge reshapes the whole
+# config at load time: embedded SQLite storage, offline package resolution, and
+# the terminology / MDM / SQL-on-FHIR / admin subsystems are auto-disabled.
+#
+#   docker compose -f docker-compose.edge.yml up -d
+#
+# The SQLite database persists on the paito_edge_data volume. Only the FHIR API
+# port (3500) is exposed — edge disables the admin API by design.
+# ──────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-edge
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API (admin API is disabled in edge mode)
+    environment:
+      SERVER_MODE: edge                       # forces embedded SQLite + offline packages
+      SERVER_PORT: "3500"
+      SQLITE_PATH: /app/data/gofhir-edge.db
+      FHIR_VERSION: R4
+      AUTH_ENABLED: "false"
+      # Optional: trade CPU for lower memory on constrained nodes.
+      # GOMEMLIMIT: 192MiB
+    volumes:
+      - paito_edge_data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3500/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - paito-edge
+
+volumes:
+  paito_edge_data:
+
+networks:
+  paito-edge:
+    driver: bridge

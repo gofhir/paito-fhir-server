@@ -1,0 +1,102 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Paito FHIR Server — SMART on FHIR / OAuth2 profile
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Turns on the full SMART on FHIR security stack:
+#   • auth.enabled=true with mode=smart (embedded OAuth2 authorization server)
+#   • admin API + GitOps seeded with demo OAuth clients (clients.smart-auth.yaml)
+#   • audit.enabled=true so every operation lands in the AuditEvent store and is
+#     queryable via the admin API (GET /api/audit/events)
+#
+# Mounted at /app/config/smart-auth.yaml via docker-compose.smart-auth.yml and
+# selected with CONFIG_PATH. Secrets and the login user are injected from the
+# compose environment (SMOKE_* / ADMIN_API_KEY) and resolved at load time.
+# ══════════════════════════════════════════════════════════════════════════════
+
+fhir:
+  version: R4
+
+server:
+  host: "0.0.0.0"
+  port: 3500
+  mode: full
+  basePath: "/fhir/r4"
+  shutdownTimeout: 15s
+
+storage:
+  driver: postgres
+  postgres:
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    database: "${POSTGRES_DB}"
+    sslMode: disable
+    maxConns: 10
+    minConns: 2
+
+logging:
+  level: info
+  format: text
+
+# ── Admin API ON, GitOps seeds the OAuth clients ────────────────────────────
+admin:
+  enabled: true
+  port: 3501
+  auth:
+    strategy: apikey
+    apiKeys:
+      - "${ADMIN_API_KEY}"
+  rbac:
+    enabled: false
+  gitops:
+    enabled: true
+    clientsPath: "/app/config/clients.smart-auth.yaml"
+    reconcileOnStart: true
+    watchForChanges: false
+
+# ── SMART on FHIR ON ────────────────────────────────────────────────────────
+auth:
+  enabled: true
+  mode: smart
+  smart:
+    # Issuer MUST match the public base URL the clients reach the server on.
+    issuer: "http://localhost:3500/fhir/r4"
+    signingAlgorithm: RS384
+    accessTokenTTL: 3600
+    refreshTokenTTL: 86400
+    codeExpirySeconds: 300
+    # authorization_code consent requires an authenticated user, which switches
+    # the consent authenticator to the username/password SimpleAuthenticator
+    # (backed by the Postgres user store).
+    requireUserAuth: true
+  # Bootstrap a login user for the authorization_code (consent) flow.
+  initialAdmin:
+    username: "${SMOKE_USER}"
+    password: "${SMOKE_USER_PASSWORD}"
+  scopes:
+    enforceOnRead: true
+
+# ── Audit Logging ON so admin /api/audit returns the trail ──────────────────
+audit:
+  enabled: true
+  level: "all"
+
+# Other modules OFF — keeps the surface tight
+terminology:
+  enabled: false
+observability:
+  tracing:
+    enabled: false
+  metrics:
+    enabled: false
+subscription:
+  enabled: false
+broker:
+  enabled: false
+mdm:
+  enabled: false
+security:
+  enabled: false
+consent:
+  enabled: false

@@ -1,0 +1,75 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Paito FHIR Server — Security (labels, consent, redaction, provenance, BTG, audit)
+# ─────────────────────────────────────────────────────────────────────────────
+# Boots the server with EVERY security module turned on so one stack can
+# demonstrate the whole data-protection surface:
+#   • meta.security confidentiality labels + the _security search parameter
+#   • Consent resources evaluated with a deny-overrides algorithm
+#   • Server-enforced field redaction (adds the SUBSETTED meta.tag)
+#   • Automatic FHIR Provenance generation on every create/update/delete
+#   • Break-the-Glass emergency override via the X-BTG-Reason header
+#   • Audit trail materialized as queryable FHIR AuditEvent resources
+#
+# The server reads its config from the mounted config/security.yaml
+# (selected via CONFIG_PATH).
+#
+#   docker compose -f docker-compose.security.yml up -d
+#   bash examples/25-security/run.sh
+#
+# Auth is left OFF so the curl examples need no OAuth dance. Label/consent/BTG
+# ENFORCEMENT reads the caller's clearance, patient context and purpose-of-use
+# from the SMART token, so to watch them BLOCK requests, layer this on top of
+# docker-compose.auth.yml. See docs/security.md.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    ports:
+      - "3500:3500"   # FHIR API   -> /fhir/r4
+      - "3501:3501"   # Admin API  (operational audit view at /api/audit/*)
+    environment:
+      # Storage
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      # Select the mounted config file (enables all security modules)
+      CONFIG_PATH: /app/config/security.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config/security.yaml:/app/config/security.yaml:ro
+      - paito_data:/app/data
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+  paito_data:
+
+networks:
+  paito-network:
+    driver: bridge

@@ -1,0 +1,8 @@
+{
+  "resourceType": "Patient",
+  "id": "pat-1",
+  "name": [
+    { "family": "Cloud", "given": ["Ada"] }
+  ],
+  "gender": "female"
+}

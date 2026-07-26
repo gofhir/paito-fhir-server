@@ -1,0 +1,42 @@
+{
+  "resourceType": "Bundle",
+  "type": "batch",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "Bulk", "given": ["Alpha"] } ],
+        "gender": "female",
+        "birthDate": "1990-01-01"
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "Bulk", "given": ["Alpha"] } ],
+        "gender": "female",
+        "birthDate": "1990-01-01"
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "Bulk", "given": ["Beta"] } ],
+        "gender": "male",
+        "birthDate": "1980-05-05"
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "name": [ { "family": "Bulk", "given": ["Beta"] } ],
+        "gender": "male",
+        "birthDate": "1980-05-05"
+      },
+      "request": { "method": "POST", "url": "Patient" }
+    }
+  ]
+}

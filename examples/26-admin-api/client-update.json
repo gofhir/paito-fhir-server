@@ -1,0 +1,9 @@
+{
+  "name": "backend-service",
+  "secret": "",
+  "redirectUris": [],
+  "grantTypes": ["client_credentials"],
+  "scopes": ["system/*.cruds"],
+  "confidential": true,
+  "active": true
+}

@@ -1,0 +1,27 @@
+{
+  "resourceType": "Patient",
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Lopez",
+      "given": ["Carlos"]
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1985-11-20",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "+56987654321",
+      "use": "mobile"
+    }
+  ],
+  "address": [
+    {
+      "use": "home",
+      "city": "Valparaiso",
+      "country": "CL"
+    }
+  ]
+}

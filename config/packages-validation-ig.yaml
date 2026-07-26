@@ -1,0 +1,26 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Paito FHIR Server — Implementation Guide list (GitOps reconciler)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Declarative IG list consumed by the admin GitOps reconciler at boot
+# (admin.gitops.packagesPath). Each entry is fetched from packages.fhir.org
+# and its StructureDefinitions / ValueSets / CodeSystems are loaded so that
+# $validate can enforce them.
+#
+# First boot downloads ~7 MB into the named volume `paito_igcache`.
+# Subsequent boots reuse the cache and skip the download.
+# ══════════════════════════════════════════════════════════════════════════════
+
+packages:
+  # US Core 5.0.1 — canonical US profile pack:
+  #   • us-core-patient (race + ethnicity extensions, identifier 1..*)
+  #   • us-core-observation, us-core-condition, us-core-encounter, ...
+  # Reference: https://hl7.org/fhir/us/core/STU5.0.1/
+  - name: hl7.fhir.us.core
+    version: 5.0.1
+
+  # International Patient Summary (IPS) 1.1.0 — minimum dataset for
+  # cross-border patient summaries; used here as the "international baseline".
+  # Reference: https://hl7.org/fhir/uv/ips/STU1.1/
+  - name: hl7.fhir.uv.ips
+    version: 1.1.0

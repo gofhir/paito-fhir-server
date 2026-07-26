@@ -1,0 +1,118 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# paito-fhir-server — Security feature config (labels, consent, redaction,
+# provenance, break-the-glass, audit).
+#
+# Mounted into the container at /app/config/security.yaml and selected via
+# CONFIG_PATH by docker-compose.security.yml.
+#
+# This profile turns ON every security module so a single stack can demonstrate:
+#   • meta.security labels + _security search + confidentiality hierarchy
+#   • Consent resource evaluation (deny-overrides)
+#   • Field-level redaction with the SUBSETTED tag
+#   • Automatic Provenance generation on write
+#   • Break-the-Glass (X-BTG-Reason) emergency override
+#   • Audit trail as queryable FHIR AuditEvent resources
+#
+# NOTE: auth is left DISABLED for copy-pasteable curl examples. Label
+# ENFORCEMENT, consent enforcement and BTG activation all read the caller's
+# clearance / patient context / purpose-of-use from the OAuth token — with auth
+# off the caller is treated as unrestricted, so labels/consent/BTG are
+# demonstrated as data (create + search + tag), not as request-blocking. To see
+# enforcement block requests, run under SMART auth (docker-compose.auth.yml).
+# ─────────────────────────────────────────────────────────────────────────────
+
+fhir:
+  version: R4
+
+server:
+  host: "0.0.0.0"
+  port: 3500
+  mode: full
+  basePath: "/fhir/r4"
+  shutdownTimeout: 15s
+
+storage:
+  driver: postgres
+  postgres:
+    host: postgres
+    port: 5432
+    user: paito
+    password: paito
+    database: paito
+    sslMode: disable
+    maxConns: 10
+    minConns: 2
+
+logging:
+  level: info
+  format: text
+
+# ── Admin API (operational audit view at :3501/api/audit/*) ─────────────────
+admin:
+  enabled: true
+  port: 3501
+
+# ── Security Labels / Label-Based Access Control ────────────────────────────
+security:
+  enabled: true
+  confidentialityHierarchy:
+    U: 0
+    L: 1
+    M: 2
+    N: 3
+    R: 4
+    V: 5
+  defaultConfidentiality: "N"
+  denialStrategy: "mask"
+
+# ── Consent Enforcement (deny-overrides) ────────────────────────────────────
+consent:
+  enabled: true
+  cacheTTL: 5m
+  defaultPolicy: "permit"
+  denialStrategy: "mask"
+  failPolicy: "closed"
+
+# ── Break-the-Glass emergency override ──────────────────────────────────────
+breakTheGlass:
+  enabled: true
+  allowedPurposes:
+    - BTG
+  requireReason: true
+
+# ── Field-Level Redaction (server-enforced minimum-necessary) ───────────────
+fieldRedaction:
+  enabled: true
+  rules:
+    Patient:
+      redactFields:
+        - identifier
+      preserveForScopes:
+        - system/*.read
+
+# ── Audit Logging → queryable FHIR AuditEvent resources ─────────────────────
+audit:
+  enabled: true
+  level: "all"
+  createAuditEvents: true
+
+# ── Provenance Auto-Generation on create/update/delete ──────────────────────
+provenance:
+  autoGenerate: true
+  agentType: author
+  agentWho: "Device/paito-fhir-server"
+
+# Keep the surface tight — unrelated modules off
+terminology:
+  enabled: false
+subscription:
+  enabled: false
+broker:
+  enabled: false
+mdm:
+  enabled: false
+observability:
+  tracing:
+    enabled: false
+  metrics:
+    enabled: false

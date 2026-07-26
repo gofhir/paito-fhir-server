@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# paito FHIR Server — Bulk Data config (OPT-IN $import)
+#
+# Mount this file only when you want the EXPERIMENTAL $import operation. Wire it
+# in via CONFIG_PATH in docker-compose.bulk-data.yml. Env vars (STORAGE_DRIVER,
+# POSTGRES_*, ...) still apply and override; this file only supplies the
+# bulkData block, which has no dedicated env vars beyond enabled/dataDir.
+#
+# WARNING: $import is a draft/unratified operation. It makes the server fetch
+# NDJSON from caller-supplied URLs (an SSRF primitive), so every fetch is guarded
+# by this allowlist (URL prefixes) PLUS the egress policy (https/http scheme,
+# cloud-metadata / loopback / link-local IPs blocked at connect time). An EMPTY
+# allowedSources rejects ALL imports (fail-closed).
+# ─────────────────────────────────────────────────────────────────────────────
+bulkData:
+  enabled: true
+  dataDir: "./data/bulkdata"
+  maxConcurrentJobs: 5
+  maxResourcesPerFile: 100000
+  retentionPeriod: "24h"
+  cleanupInterval: "1h"
+  pageSize: 500
+
+  # EXPERIMENTAL — draft $import operation. Disabled by default.
+  import:
+    enabled: true
+    allowedSources:
+      - "https://storage.example.org/fhir-imports/"
+    httpTimeout: "5m"

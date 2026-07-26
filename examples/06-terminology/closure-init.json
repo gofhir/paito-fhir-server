@@ -1,0 +1,6 @@
+{
+  "resourceType": "Parameters",
+  "parameter": [
+    {"name": "name", "valueString": "demo-closure-session"}
+  ]
+}

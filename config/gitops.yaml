@@ -1,0 +1,80 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Paito FHIR Server — FHIR as Code (GitOps)
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Declarative reconciliation of FHIR resources from a directory (your Git repo)
+# instead of hand-crafted REST writes. On startup the server reconciles every
+# *.json file under gitops.path into the store: each resource is upserted by id
+# and tagged with the owning source (meta.tag http://gofhir.io/fhir/gitops|NAME),
+# and — because prune is on — resources that disappear from the repo are deleted
+# on the next reconcile (ownership-guarded, never cross-source or cross-tenant).
+#
+# This is the TOP-LEVEL `gitops:` block (FHIR resources). It is distinct from
+# `admin.gitops`, which reconciles OAuth clients / IG packages.
+#
+# Mounted into the container at /app/config/gitops.yaml and selected via
+# CONFIG_PATH. The repo directory is mounted at /app/fhir-resources.
+# See docker-compose.gitops.yml.
+# ══════════════════════════════════════════════════════════════════════════════
+
+fhir:
+  version: R4
+
+server:
+  host: "0.0.0.0"
+  port: 3500
+  mode: full
+  basePath: "/fhir/r4"
+  shutdownTimeout: 15s
+
+storage:
+  driver: postgres
+  postgres:
+    host: "${POSTGRES_HOST}"
+    port: 5432
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    database: "${POSTGRES_DB}"
+    sslMode: disable
+    maxConns: 10
+    minConns: 2
+
+logging:
+  level: info
+  format: text
+
+# ── FHIR as Code ON ───────────────────────────────────────────────────────────
+gitops:
+  enabled: true
+  path: /app/fhir-resources        # directory of *.json FHIR resource files
+  name: paito-repo                 # ownership identity → tag code gitops|paito-repo
+  reconcileOnStart: true           # apply the directory once at startup
+  prune: true                      # delete managed resources removed from the repo
+  allowEmptyRepo: false            # abort prune if the dir loads to zero resources
+  maxPrune: 100                    # cap deletions per run (a larger prune aborts)
+  adoptExisting: false             # never clobber a non-GitOps resource on id collision
+  watchIntervalSeconds: 10         # re-reconcile every 10s (edit files → see it sync)
+
+auth:
+  enabled: false
+
+admin:
+  enabled: false
+
+validation:
+  enabled: false
+
+terminology:
+  enabled: false
+
+subscription:
+  enabled: false
+broker:
+  enabled: false
+mdm:
+  enabled: false
+observability:
+  tracing:
+    enabled: false
+  metrics:
+    enabled: false

@@ -1,0 +1,11 @@
+{
+  "resourceType": "Organization",
+  "name": "General Hospital",
+  "address": [
+    {
+      "city": "Santiago",
+      "state": "RM",
+      "country": "CL"
+    }
+  ]
+}

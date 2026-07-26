@@ -1,0 +1,107 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# paito FHIR Server — Federated OIDC (Keycloak broker) stack
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Proves the FULL federated SMART flow against a REAL Keycloak:
+#   • Keycloak  → host 8081 (realm "gofhir" imported from config/keycloak)
+#   • paito     → host 3500 (FHIR) + 3501 (admin), auth.mode=federated
+#   • Postgres  → host 5432
+#
+# Keycloak's hostname is pinned to host.docker.internal:8081 so its issuer and
+# endpoints are identical whether resolved by paito (server-to-server, via the
+# host-gateway mapping) or by curl on the host (via --resolve to 127.0.0.1:8081).
+# That makes discoveryURL == the IdP issuer == the id_token `iss` everywhere, so
+# upstream id_token signature/iss validation passes.
+#
+# Launch:
+#   docker compose -f docker-compose.federated.yml up -d
+#   bash examples/10-federated-auth/run.sh
+# ══════════════════════════════════════════════════════════════════════════════
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: paito-federated-kc
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: "http://host.docker.internal:8081"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./config/keycloak/realm-gofhir.json:/opt/keycloak/data/import/realm-gofhir.json:ro
+    ports:
+      - "8081:8080"
+    networks:
+      - paito-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: paito-federated-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paito -d paito"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paito-network
+
+  paito:
+    image: ghcr.io/gofhir/paito-fhir-server:latest
+    container_name: paito-fhir
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      STORAGE_DRIVER: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: paito
+      POSTGRES_PASSWORD: paito
+      POSTGRES_DB: paito
+      POSTGRES_SSL_MODE: disable
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "3500"
+      # Federated auth + GitOps SMART client are driven by the mounted YAML.
+      CONFIG_PATH: /app/configs/config.federated.yaml
+      LOG_LEVEL: info
+      LOG_FORMAT: text
+      SMOKE_FED_APP_SECRET: smoke-fed-app-secret-do-not-use-in-prod
+      ADMIN_API_KEY: paito-federated-admin-key
+    volumes:
+      - ./config/federated.yaml:/app/configs/config.federated.yaml:ro
+      - ./config/clients.federated.yaml:/app/configs/clients.federated.yaml:ro
+    ports:
+      - "3500:3500"   # FHIR API
+      - "3501:3501"   # Admin API
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3500/fhir/r4/metadata"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    networks:
+      - paito-network
+
+volumes:
+  postgres_data:
+
+networks:
+  paito-network:
+    driver: bridge
