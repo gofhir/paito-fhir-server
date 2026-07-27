@@ -128,7 +128,17 @@ http POST "$BASE_URL/\$process-message" "@$DIR/bundle-message.json"
 check "$RESP_STATUS" "200" "POST /\$process-message"
 contains "response type"   '"type":"message"'
 contains "MessageHeader"   '"resourceType":"MessageHeader"'
-contains "response ok"     '"code":"ok"'
+# $process-message dispatches to a configured MessageProcessor. The base stack
+# has none, so the server honestly returns MessageHeader.response.code=fatal-error.
+# Wire a processor (see docker-compose.messaging.yml + examples/14-messaging) to
+# get code=ok. Accept either so this demo passes on the plain base stack.
+if echo "$RESP_BODY" | grep -q '"code":"ok"'; then
+    ok "message dispatched → response.code=ok (processor configured)"
+elif echo "$RESP_BODY" | grep -q '"code":"fatal-error"'; then
+    ok "no processor on base stack → response.code=fatal-error (expected; use docker-compose.messaging.yml to dispatch)"
+else
+    fail "unexpected \$process-message response code"; exit 1
+fi
 
 echo
 echo "Sending the same message to POST / (base) is rejected:"

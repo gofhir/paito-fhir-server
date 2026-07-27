@@ -110,23 +110,23 @@ echo "$BODY" | grep -q '"resourceType":"Patient"' && pass "resource returned"
 # ── C. PARTIAL UPDATES (PATCH) ───────────────────────────────────────────────
 info "C. Create a Patient to patch (gender=unknown, family=PatchMe)"
 http POST "$BASE_URL/Patient" '{"resourceType":"Patient","name":[{"family":"PatchMe","given":["Original"]}],"gender":"unknown"}'
-PPID=$(id_of "$BODY")
-pass "Patient id=$PPID"
+PATCH_PID=$(id_of "$BODY")
+pass "Patient id=$PATCH_PID"
 
 info "C. JSON Patch (RFC 6902) — replace /gender ⇒ female"
-http PATCH "$BASE_URL/Patient/$PPID" "$(cat "$DIR/json-patch.json")" "application/json-patch+json"
+http PATCH "$BASE_URL/Patient/$PATCH_PID" "$(cat "$DIR/json-patch.json")" "application/json-patch+json"
 [[ "$STATUS" == 200 ]] && pass "patched (200)" || { echo "expected 200 got $STATUS: $BODY"; exit 1; }
 echo "$BODY" | grep -q '"versionId":"2"' && pass "versionId=2"
 echo "$BODY" | grep -q '"gender":"female"' && pass "gender=female"
 
 info "C. FHIRPath Patch (Parameters) — replace Patient.name[0].family"
-http PATCH "$BASE_URL/Patient/$PPID" "$(cat "$DIR/fhirpath-patch.json")" "$JSON"
+http PATCH "$BASE_URL/Patient/$PATCH_PID" "$(cat "$DIR/fhirpath-patch.json")" "$JSON"
 [[ "$STATUS" == 200 ]] && pass "patched (200)" || { echo "expected 200 got $STATUS: $BODY"; exit 1; }
 echo "$BODY" | grep -q '"versionId":"3"' && pass "versionId=3"
 echo "$BODY" | grep -q '"family":"FHIRPathPatched"' && pass "family=FHIRPathPatched"
 
 info "C. History reflects all 3 versions (POST + 2 PATCH)"
-http GET "$BASE_URL/Patient/$PPID/_history"
+http GET "$BASE_URL/Patient/$PATCH_PID/_history"
 echo "$BODY" | grep -q '"total":3' && pass "_history total=3"
 
 info "ALL EXAMPLES PASSED"

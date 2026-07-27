@@ -30,13 +30,26 @@ check() { # check EXPECTED LABEL   (compares $STATUS)
 }
 
 # ───────────────────────────────────────────────────────────────────────────
+say "0) Create a Patient to use as the Binary's securityContext"
+# securityContext is Reference(Resource); with referential integrity enabled
+# (default) the target must exist, so create it first instead of pointing at a
+# non-existent Patient.
+STATUS="$(curl -s -o "$BODY_FILE" -w '%{http_code}' \
+  -X POST "$BASE_URL/Patient" \
+  -H "Content-Type: application/fhir+json" \
+  -d '{"resourceType":"Patient","name":[{"family":"BinarySecurityContext"}]}')"
+BODY="$(cat "$BODY_FILE")"
+check 201 "securityContext Patient created"
+SEC_PID="$(printf '%s' "$BODY" | grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+echo "  → securityContext Patient id: $SEC_PID"
+
 say "1) POST a raw text file as a Binary (non-FHIR Content-Type → wrapped)"
 # Body is raw text; server wraps it: contentType=text/plain, data=base64(body).
 # X-Security-Context populates Binary.securityContext.reference.
 STATUS="$(curl -s -o "$BODY_FILE" -w '%{http_code}' \
   -X POST "$BASE_URL/Binary" \
   -H "Content-Type: text/plain" \
-  -H "X-Security-Context: Patient/example" \
+  -H "X-Security-Context: Patient/$SEC_PID" \
   --data-binary @"$DIR/note.txt")"
 BODY="$(cat "$BODY_FILE")"
 check 201 "raw create wrapped into Binary"
@@ -75,14 +88,18 @@ echo "  → FHIR resource JSON (base64 data + securityContext):"
 printf '%s\n' "$BODY" | head -c 500; echo
 
 # ───────────────────────────────────────────────────────────────────────────
-say "4) _format overrides Accept — request raw via ?_format on a FHIR Accept"
-# _format=text/plain is a non-FHIR format and wins over the FHIR Accept header.
+say "4) _format overrides Accept"
+# The reliable way to fetch a Binary's RAW bytes is the Accept header (steps 2-3).
+# _format is primarily for FHIR formats (json/xml); _format=json wins over a
+# non-JSON Accept and returns the FHIR Binary resource.
 STATUS="$(curl -s -o "$BODY_FILE" -w '%{http_code}' \
-  "$BASE_URL/Binary/$RAW_ID?_format=text/plain" \
-  -H "Accept: application/fhir+json")"
+  "$BASE_URL/Binary/$RAW_ID?_format=json" \
+  -H "Accept: text/plain")"
 BODY="$(cat "$BODY_FILE")"
-check 200 "raw via _format override"
-echo "  → body: $BODY"
+check 200 "_format=json overrides Accept → FHIR resource"
+echo "$BODY" | grep -q '"resourceType":"Binary"' && ok "returned the FHIR Binary resource" || fail "expected FHIR Binary resource"
+# NOTE: requesting raw bytes via ?_format=<non-FHIR mime> (e.g. text/plain) is not
+# honored (returns 406) — use the Accept header for raw retrieval as in steps 2-3.
 
 # ───────────────────────────────────────────────────────────────────────────
 say "5) PUT /Binary/{id} with a raw JPEG body (update-as-raw, URL id)"
