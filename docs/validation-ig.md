@@ -15,7 +15,11 @@ severities tell you whether the resource conforms.
 - Pre-flight checking resources against US Core / IPS / national IG profiles before ingestion.
 - Enforcing required cardinality and invariants a profile adds on top of base FHIR.
 - Checking `required`/`extensible` terminology bindings against installed ValueSets.
-- Letting clients discover which profiles the server supports (via `GET /StructureDefinition` and `/metadata`).
+- Letting clients discover which profiles the server supports: by canonical with
+  `GET /StructureDefinition?url=<canonical>` (optionally `|<version>`), or as a list
+  from `/metadata` `rest.resource.supportedProfile[]`. A bare
+  `GET /StructureDefinition` returns only profiles held in the resource store, not the
+  contents of installed packages — see Profile Discovery below for why.
 - CI/conformance gates that assert on `OperationOutcome.issue[]`.
 
 ## Launch

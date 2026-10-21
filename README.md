@@ -1,3 +1,7 @@
+> **Archivado.** Este repositorio ya no se mantiene. Las imágenes
+> `ghcr.io/gofhir/paito-fhir-server` publicadas siguen disponibles, pero no
+> recibirán versiones nuevas.
+
 # Paito FHIR Server
 
 A production-ready FHIR R4/R4B/R5 server written in Go.
